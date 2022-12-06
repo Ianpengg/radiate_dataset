@@ -134,3 +134,5 @@ dmypy.json
 .pyre/
 
 saved_images/
+data/*
+__pycache__/radiate.cpython-37.pyc

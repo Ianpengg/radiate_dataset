@@ -7,7 +7,8 @@ import pandas as pd
 import math
 import yaml
 from utils.calibration import Calibration
-
+from copy import deepcopy, copy
+import re
 
 class Sequence:
     """
@@ -84,17 +85,18 @@ class Sequence:
             self.sequence_path, self.config['radar_timestamp_file']))
         self.timestamp_lidar = self.load_timestamp(os.path.join(
             self.sequence_path, self.config['lidar_timestamp_file']))
-
+        self.timestamp_gps = self.load_timestamp(os.path.join(
+            self.sequence_path, self.config['gps_timestamp_file']))
         # get minimum timestamp
-        self.init_timestamp = np.min([self.timestamp_camera['time'][0],
-                                      self.timestamp_lidar['time'][0],
-                                      self.timestamp_radar['time'][0]])
-
+        # self.init_timestamp = np.min([self.timestamp_camera['time'][0],
+        #                              self.timestamp_lidar['time'][0],
+        #                              self.timestamp_radar['time'][0]])
+        self.init_timestamp = self.timestamp_radar['time'][0]
         # get end timestamp
-        self.end_timestamp = np.max([self.timestamp_camera['time'][-1],
-                                     self.timestamp_lidar['time'][-1],
-                                     self.timestamp_radar['time'][-1]])
-
+        # self.end_timestamp = np.max([self.timestamp_camera['time'][-1],
+        #                              self.timestamp_lidar['time'][-1],
+        #                              self.timestamp_radar['time'][-1]])
+        self.end_timestamp = self.timestamp_radar['time'][-1]
     def __load_annotations(self):
         if (os.path.exists(self.annotations_path)):
             f = open(self.annotations_path)
@@ -183,6 +185,15 @@ class Sequence:
                         im_lidar[yy, xx] = dist
 
         return im_lidar
+    def get_sensor_timestamp(self, sensor_name):
+        sensor_name = re.search('(lidar|radar|zed_(left|right))', sensor_name).group(0)
+        if sensor_name == "lidar":
+            return self.timestamp_lidar
+        if sensor_name == "radar":
+            return self.timestamp_radar
+        if sensor_name == "zed_left" or sensor_name == "zed_right":
+            return self.timestamp_camera
+        
 
     def get_from_timestamp(self, t, get_sensors=True, get_annotations=True):
         """method to get sensor and annotation information from some timestamp
@@ -198,12 +209,24 @@ class Sequence:
         """
         output = {}
         self.current_time = t
-        id_camera, ts_camera = self.get_id(
-            t, self.timestamp_camera, self.config['sync']['camera'])
-        id_lidar, ts_lidar = self.get_id(
-            t, self.timestamp_lidar, self.config['sync']['lidar'])
         id_radar, ts_radar = self.get_id(
             t, self.timestamp_radar, self.config['sync']['radar'])
+
+        id_camera, ts_camera = self.get_id(
+            t, self.timestamp_camera, self.config['sync']['camera'])
+        
+        id_lidar, ts_lidar = self.get_id(
+            t, self.timestamp_lidar, self.config['sync']['lidar'])
+
+        
+        print("current_time", self.current_time)
+        print(f"frame id:{id_lidar}, lidar_current_time:{ts_lidar}")
+        print(f"frame id:{id_radar}, radar_current_time:{ts_radar}")  
+
+        print()
+        print("time difference", ts_lidar - ts_radar)
+        print()
+        
         if (len(self.timestamp_radar['time']) > id_radar + 1):
             t2 = self.timestamp_radar['time'][id_radar + 1]
         else:
@@ -286,20 +309,20 @@ class Sequence:
 
                 if self.config['use_lidar_bev_image']:
                     annotations['lidar_bev_image'] = self.get_lidar_annotations(
-                        id_radar, self.config['interpolate_bboxes'], t, ts_radar, t2)
+                        id_radar, self.config['interpolate_bboxes'], t, ts_lidar, t2)
 
                 if self.config['use_camera_left_rect']:
                     annotations['lidar_bev_image'] = self.get_lidar_annotations(
-                        id_radar, self.config['interpolate_bboxes'], t, ts_radar, t2)
-                    bboxes_3d = self.project_bboxes_to_camera(annotations['lidar_bev_image'],
+                        id_radar, self.config['interpolate_bboxes'], t, ts_lidar, t2)
+                    bboxes_3d = self.project_bboxes_to_camera((annotations['lidar_bev_image']),
                                                               self.calib.left_cam_mat,
                                                               self.calib.RadarToLeft)
                     annotations['camera_left_rect'] = bboxes_3d
 
                 if self.config['use_camera_right_rect']:
                     annotations['lidar_bev_image'] = self.get_lidar_annotations(
-                        id_radar, self.config['interpolate_bboxes'], t, ts_radar, t2)
-                    bboxes_3d = self.project_bboxes_to_camera(annotations['lidar_bev_image'],
+                        id_radar, self.config['interpolate_bboxes'], t, ts_lidar, t2)
+                    bboxes_3d = self.project_bboxes_to_camera((annotations['lidar_bev_image']),
                                                               self.calib.right_cam_mat,
                                                               self.calib.RadarToRight)
                     annotations['camera_right_rect'] = bboxes_3d
@@ -307,7 +330,12 @@ class Sequence:
             output['annotations'] = annotations
 
         return output
-
+    def vis_combined(self, output, ):
+        if (output != {}):
+            if self.config['save_images']:
+                os.makedirs(os.path.join(self.output_folder,
+                                         str(self.current_time)), exist_ok=True)
+            
     def vis_all(self, output, wait_time=1):
         """method to diplay all the sensors/annotations
 
@@ -577,7 +605,7 @@ class Sequence:
         """
         new_annotations = []
         for object in annotations:
-            new_object = object
+            new_object = deepcopy(object)
             xx = object['bbox']['position'][0]
             yy = object['bbox']['position'][1]
             zz = self.config['sensors_height']
@@ -601,14 +629,14 @@ class Sequence:
         """
         new_pc = []
         for point in pc:
-            # new_object = object
+            new_object = object
             xx = point[0]
             yy = point[1]
             zz = point[2]
             pos = np.array([xx, yy, zz, 1])
             new_pos = np.matmul(M, pos)
             new_pos = new_pos/new_pos[3]
-            new_pc.append([pos[0], pos[1], pos[2], point[3], point[4]])
+            new_pc.append([new_pos[0], new_pos[1], new_pos[2], point[3], point[4]])
         new_pc = np.array(new_pc)
         return new_pc
 
@@ -621,7 +649,7 @@ class Sequence:
         :rtype: list
         """
         raw_annotations = []
-        for object in self.annotations:
+        for object in (self.annotations):
             if (object['bboxes'][annotation_id]):
                 obj = {}
                 obj['id'] = object['id']
@@ -687,7 +715,8 @@ class Sequence:
         :return: image with the objects overlayed
         :rtype: np.array
         """
-        sensor_vis = np.copy(sensor)
+        #print(sensor.keys())
+        sensor_vis = copy(sensor)
         for object in objects:
             bbox = object['bbox']['position']
             angle = object['bbox']['rotation']
@@ -724,8 +753,8 @@ class Sequence:
         """
         ind = np.argmin(np.abs(all_timestamps['time'] - t + time_offset))
         return all_timestamps['frame'][ind], all_timestamps['time'][ind]
-
-    def __timestamp_format(self, raw_timestamp):
+    @classmethod
+    def __timestamp_format(cls, raw_timestamp):
         """
         function to fix the timestamp
         """
@@ -740,8 +769,8 @@ class Sequence:
             return float(formatted_timestamp)
         else:
             return float(raw_timestamp)
-
-    def load_timestamp(self, timestamp_path):
+    @classmethod
+    def load_timestamp(cls, timestamp_path):
         """load all timestamps from a sensor
 
         :param timestamp_path: path to text file with all timestamps
@@ -755,7 +784,7 @@ class Sequence:
             for line in lines:
                 words = line.split()
                 timestamps['frame'].append(int(words[1]))
-                timestamps['time'].append(self.__timestamp_format(words[3]))
+                timestamps['time'].append(cls.__timestamp_format(words[3]))
         return timestamps
 
     def __get_projected_bbox(self, bb, rotation, cameraMatrix, extrinsic, obj_height=2):
@@ -832,10 +861,10 @@ class Sequence:
 
         color = (np.array(color) * 255).tolist()
 
-        cv2.line(im, tuple(points[:, 0]), tuple(points[:, 1]), color, 3)
-        cv2.line(im, tuple(points[:, 1]), tuple(points[:, 2]), color, 3)
-        cv2.line(im, tuple(points[:, 2]), tuple(points[:, 3]), color, 3)
-        cv2.line(im, tuple(points[:, 3]), tuple(points[:, 0]), color, 3)
+        cv2.line(im, tuple(points[:, 0]), tuple(points[:, 1]), color, 2)
+        cv2.line(im, tuple(points[:, 1]), tuple(points[:, 2]), color, 2)
+        cv2.line(im, tuple(points[:, 2]), tuple(points[:, 3]), color, 2)
+        cv2.line(im, tuple(points[:, 3]), tuple(points[:, 0]), color, 2)
 
         return im
 

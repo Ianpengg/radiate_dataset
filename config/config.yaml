@@ -2,6 +2,7 @@
 radar_timestamp_file: 'Navtech_Cartesian.txt'
 lidar_timestamp_file: 'velo_lidar.txt'
 camera_timestamp_file: 'zed_left.txt'
+gps_timestamp_file: 'GPS_IMU_Twist.txt'
 
 # whether to use or not some sensors
 use_camera_left_raw: False
