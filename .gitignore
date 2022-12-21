@@ -136,3 +136,5 @@ dmypy.json
 saved_images/
 data/*
 __pycache__/radiate.cpython-37.pyc
+logs/*
+runs/*
