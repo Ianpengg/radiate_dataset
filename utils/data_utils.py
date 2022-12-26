@@ -83,12 +83,16 @@ def polar_to_cart(raw_example_data, cart_resolution: float, cart_pixel_width: in
 
 
 def check_is_valid(list):
+    """
+    Check if the sequence of annotations is valid?\n
+    Definition of valid:\n
+    if whole items in the sequence of annotations are not None
+    """
     valid = 0
     for i in list:
         if i is not None:
             valid +=1
     if valid == len(list):
-        print("VALID")
         return True
     else:
         return False
@@ -99,7 +103,7 @@ def haversine(lon1, lat1, lon2, lat2):
     x = (radians(lon2) - radians(lon1)) * cos(0.5 * (radians(lat2) + radians(lat1)))
     y = radians(lat2) - radians(lat1)
     d = R * sqrt(x*x + y*y)
-    d = d*1000
+    d = d * 1000  # convert to meter
     return d
 
 
