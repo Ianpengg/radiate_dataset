@@ -22,7 +22,7 @@ class Sequence:
     | >>> seq.vis_all(output)
     """
 
-    def __init__(self, sequence_path, config_file='config/config.yaml'):
+    def __init__(self, sequence_path, config_file='config/config.yaml', display_log=False):
         """
         Initialise the class Sequence. This class contains the methods related to
         access the sensor and annotation information at certain timestamp
@@ -33,6 +33,7 @@ class Sequence:
         :type config_file: string
         :param config_file: the path to the configuration files
         """
+        self.display_log = display_log
         self.sequence_path = sequence_path
 
         # load annotations
@@ -218,14 +219,14 @@ class Sequence:
         id_lidar, ts_lidar = self.get_id(
             t, self.timestamp_lidar, self.config['sync']['lidar'])
 
-        
-        print("current_time", self.current_time)
-        print(f"frame id:{id_lidar}, lidar_current_time:{ts_lidar}")
-        print(f"frame id:{id_radar}, radar_current_time:{ts_radar}")  
+        if self.display_log:
+            print("current_time", self.current_time)
+            print(f"frame id:{id_lidar}, lidar_current_time:{ts_lidar}")
+            print(f"frame id:{id_radar}, radar_current_time:{ts_radar}")  
 
-        print()
-        print("time difference", ts_lidar - ts_radar)
-        print()
+            print()
+            print("time difference", ts_lidar - ts_radar)
+            print()
         
         if (len(self.timestamp_radar['time']) > id_radar + 1):
             t2 = self.timestamp_radar['time'][id_radar + 1]
@@ -244,7 +245,7 @@ class Sequence:
 
             radar_cartesian_path = os.path.join(
                 self.sequence_path, 'Navtech_Cartesian', str_format.format(id_radar) + '.png')
-
+            # print(radar_cartesian_path)
             lidar_path = os.path.join(
                 self.sequence_path, 'velo_lidar', str_format.format(id_lidar) + '.csv')
 
@@ -705,7 +706,7 @@ class Sequence:
     def __get_correct_lidar_id_from_raw_ind(self, id):
         return id-1
 
-    def vis(self, sensor, objects, color=None, mode='rot'):
+    def vis(self, sensor, objects, fill, color=None, mode='rot',):
         """ visualise the sensor and its annotation
 
         :param sensor: 
@@ -725,7 +726,7 @@ class Sequence:
             color = self.colors[class_name]
             if mode == 'rot':
                 sensor_vis = self.draw_boundingbox_rot(
-                    sensor_vis, bbox, angle, color)
+                    sensor_vis, bbox, angle, color, fill)
 
         return sensor_vis
 
@@ -856,15 +857,17 @@ class Sequence:
         proj_bbox_3d = np.array(proj_bbox_3d)
         return proj_bbox_3d
 
-    def draw_boundingbox_rot(self, im, bbox, angle, color):
+    def draw_boundingbox_rot(self, im, bbox, angle, color, fill):
         points = self.gen_boundingbox_rot(bbox, angle)
-
         color = (np.array(color) * 255).tolist()
-
-        cv2.line(im, tuple(points[:, 0]), tuple(points[:, 1]), color, 2)
-        cv2.line(im, tuple(points[:, 1]), tuple(points[:, 2]), color, 2)
-        cv2.line(im, tuple(points[:, 2]), tuple(points[:, 3]), color, 2)
-        cv2.line(im, tuple(points[:, 3]), tuple(points[:, 0]), color, 2)
+        if fill:
+            cv2.fillPoly(im, pts =[points.T], color=(255,255,255))
+        else:
+            cv2.line(im, tuple(points[:, 0]), tuple(points[:, 1]), color, 2)
+            cv2.line(im, tuple(points[:, 1]), tuple(points[:, 2]), color, 2)
+            cv2.line(im, tuple(points[:, 2]), tuple(points[:, 3]), color, 2)
+            cv2.line(im, tuple(points[:, 3]), tuple(points[:, 0]), color, 2)
+        
 
         return im
 
