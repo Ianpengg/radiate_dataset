@@ -4,6 +4,22 @@ import cv2
 from .data_class import Box
 import math
 
+def convert_to_mask(img) -> np.ndarray:
+    """
+    Marked region would be filled with [255,255,255]\n   
+    Here we extract the marked region with background filled with [0,0,0] 
+    @param img: Image
+    @return finak_mask: binary mask
+    """
+    final_mask = np.zeros((img.shape[:2]))   # shape = (256,256)
+    mask = np.where(img == [255, 255, 255]) # mask = (np.array([x,x,x]...), np.array([y,y,y]...), np.array([r,g,b]...) ->[x,y]
+    # extract value from the mask to generate the (x ,y) coordinate of the marked region 
+    for i in range(0, len(mask[0]),3):
+        x = mask[0][i]
+        y = mask[1][i]
+        final_mask[x][y] = 1
+        
+    return final_mask
 
 def optical_flow_test(img_fram1, img_fram2):
     img_fram1 = cv2.cvtColor(img_fram1,cv2.COLOR_BGR2GRAY)
