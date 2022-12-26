@@ -8,7 +8,7 @@ gps_timestamp_file: 'GPS_IMU_Twist.txt'
 use_camera_left_raw: False
 use_camera_right_raw: False
 use_camera_left_rect: False
-use_camera_right_rect: True
+use_camera_right_rect: False
 use_radar_polar: False
 use_radar_cartesian: True
 use_lidar_pc: True
