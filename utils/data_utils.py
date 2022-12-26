@@ -170,7 +170,27 @@ def get_instance_boxes_multiple_sweep(annotations, refer_frame, object_id, nswee
     else:
         return None 
 
+def get_radarodom(ro_filename) -> dict:
+    """
+    Get the radar odometry data from the file   
+    Save it with dictionary   
+    ex:
+    { 'radar_id': tf_mat(4x4), 'radar_id': tf_mat(4x4) ...}
+    """
+    with open(ro_filename, "r") as file:
+        odom_tf_data = {}
+        lines = file.readlines()
+        for idx in range(len(lines)):
+            line = lines[idx]
+            tf_data = line.split()
+            tf_mat = np.eye(4,4)
+            tf_mat[0,:] = np.array(tf_data[:4])
+            tf_mat[1,:] = np.array(tf_data[4:8])
+            tf_mat[2,:] = np.array(tf_data[8:12])
+            tf_mat[3,:] = np.array(tf_data[12:16])
 
+            odom_tf_data[idx] = tf_mat
+    return odom_tf_data
 
 def get_radar_label_from_t(output, seq):
     sensor_data = output['sensors']
