@@ -69,6 +69,7 @@ def get_id(t, all_timestamps, time_offset=0.0):
     :return: the closest id
     :rtype: int
     """
+    all_timestamps = np.array(all_timestamps)
     idx = np.argmin(np.abs(all_timestamps - t + time_offset))
     return idx, all_timestamps[idx]
 
@@ -119,7 +120,7 @@ def __timestamp_format(raw_timestamp):
 
 
 # path to the sequence
-root_path = 'data/radiate/'
+root_path = '../../radiate/data/radiate/'
 sequence_name = 'city_1_0'
 dt = 0.25
 time_offset = None
@@ -150,15 +151,27 @@ lidar_folder = data_root + '/velo_lidar/'
 lidar_timestamps_path = data_root+'/velo_lidar.txt'
 lidar_timestamps = load_timestamp(lidar_timestamps_path)
 
-idx = 0
+radar_idx = 0
 
 auto_playing_mode = True
 init = True
+# print(radar_timestamps['time'][0])
+# print()
+# init_time = radar_timestamps['time'][radar_idx]
+# id, time= get_id(init_time, radar_timestamps['time'])
+# id, time= get_id(init_time, lidar_timestamps['time'])
+# print(id , time)
+
 
 while (1):
-    radar_cart = cv2.imread(os.path.join(os.path.join(root_path, sequence_name), 'Navtech_Cartesian',radar_cart_file_list[idx]), 0) 
+    
+    init_time = radar_timestamps['time'][radar_idx]
+
+    lidar_id, lidar_timestamp  = get_id((init_time), lidar_timestamps['time'])
+
+    radar_cart = cv2.imread(os.path.join(os.path.join(root_path, sequence_name), 'Navtech_Cartesian',radar_cart_file_list[radar_idx]), 0) 
     cv2.imshow("radar", radar_cart)
-    points = seq.read_lidar(os.path.join(os.path.join(root_path, sequence_name), 'velo_lidar',lidar_file_list[idx])).astype(np.float32)
+    points = seq.read_lidar(os.path.join(os.path.join(root_path, sequence_name), 'velo_lidar',lidar_file_list[lidar_id])).astype(np.float32)
     #print(points.shape)
 
     points = points[:,:4]
@@ -177,18 +190,21 @@ while (1):
         init = False
     else:
         if auto_playing_mode:
-            idx += 1
+            radar_idx += 1
             key = cv2.waitKey(10)
             if key == 32: # space
                 auto_playing_mode = not auto_playing_mode
+            if key == 13: # enter
+                break
         else:
             key = cv2.waitKey(0)
         
             if key == 100: # d
-                idx += 1
+                radar_idx += 1
             if key == 97: # a
-                idx -= 1
-            if idx < 0:
-                idx=0
+                radar_idx -= 1
+            if radar_idx < 0:
+                radar_idx=0
             if key == 32: # space
                 auto_playing_mode = not auto_playing_mode
+
