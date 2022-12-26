@@ -2,6 +2,7 @@ import numpy as np
 import os 
 import cv2
 from .data_class import Box
+from .geometric_utils import GetRotMatFromTransMat
 import math
 
 def convert_to_mask(img) -> np.ndarray:
