@@ -286,6 +286,28 @@ def get_multiplesweep_bf_radar_idx(sequence_path: str,
 
     return radar_cart_list
 
+def warp_radar_by_radar_motion(src, tf_mat, cart_resolution):
+    delta_x = tf_mat[0,2]
+    delta_y = tf_mat[1,2]
+    delta_yaw = np.arctan(tf_mat[1,0] / tf_mat[0,0]) #### !! might have ambiguous issue between pi/2 and -pi/2
+
+
+    #print("delta_w",  delta_yaw)
+    cv_x = -delta_y / cart_resolution
+    cv_y = delta_x / cart_resolution
+    cv_theta = delta_yaw
+
+    warp_mat = np.zeros((2, 3), dtype=np.float32)
+    warp_mat[0, 0] = np.cos(cv_theta)
+    warp_mat[0, 1] = np.sin(cv_theta)
+    warp_mat[0, 2] = cv_x * np.cos(cv_theta) + cv_y * np.sin(cv_theta) + ( (1 - np.cos(cv_theta)) * src.shape[1] / 2 - np.sin(cv_theta) * src.shape[0] / 2 )
+    warp_mat[1, 0] = -np.sin(cv_theta)
+    warp_mat[1, 1] = np.cos(cv_theta)
+    warp_mat[1, 2] = cv_x * (-np.sin(cv_theta)) + cv_y * np.cos(cv_theta) + (np.sin(cv_theta) * src.shape[1] / 2 + (1 - np.cos(cv_theta)) * src.shape[0] / 2 )
+    warp_dst = cv2.warpAffine(src, warp_mat, (src.shape[1], src.shape[0]))
+
+    return warp_dst
+
 def crop_radar(radar_img, crop_range):
     from copy import deepcopy 
     n, m = radar_img.shape[:2]
