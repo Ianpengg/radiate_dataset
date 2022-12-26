@@ -192,20 +192,24 @@ def get_radarodom(ro_filename) -> dict:
             odom_tf_data[idx] = tf_mat
     return odom_tf_data
 
-def get_radar_label_from_t(output, seq):
-    sensor_data = output['sensors']
-    radar_c = sensor_data['radar_cartesian']
-    #lidar_c = sensor_data['lidar_bev_image']
-    annos = output['annotations']
-    #lidar_annos = annos['lidar_bev_image']
-    radar_annos = annos['radar_cartesian']
-    #print(radar_annos)
-    img = np.zeros(radar_c.shape, dtype='int8')
-    radar_annos_vis = seq.vis(radar_c, radar_annos)
-    img = radar_annos_vis
+def get_radar_label_from_t(output, seq, fill):
+    
+    if len(output.keys()) > 0:
 
-    #lidar_mask = lidar_c[:, :, 0] > 0
-    #img[lidar_mask, 2] = 255
+        sensor_data = output['sensors']
+        radar_c = sensor_data['radar_cartesian']
+        #lidar_c = sensor_data['lidar_bev_image']
+        annos = output['annotations']
+        #lidar_annos = annos['lidar_bev_image']
+        radar_annos = annos['radar_cartesian']
+
+        img = np.zeros(radar_c.shape, dtype='int8')
+        radar_annos_vis = seq.vis(radar_c, radar_annos, fill)
+        img = radar_annos_vis
+        return img
+    else:
+        return None
+    
 
     return img
 
