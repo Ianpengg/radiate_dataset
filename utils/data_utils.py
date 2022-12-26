@@ -285,3 +285,12 @@ def get_multiplesweep_bf_radar_idx(sequence_path: str,
 
 
     return radar_cart_list
+
+def crop_radar(radar_img, crop_range):
+    from copy import deepcopy 
+    n, m = radar_img.shape[:2]
+    crop_radar = deepcopy(radar_img)
+    center = (int(n/2) -crop_range[0], int(m/2) + crop_range[1])
+    crop_radar = radar_img[int(m/2) - int(crop_range[1]/2) : int(m/2) + int(crop_range[1]/2), int(n/2) - int(crop_range[0]/2) : int(n/2) + int(crop_range[0]/2)]
+        
+    return crop_radar
