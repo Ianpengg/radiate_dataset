@@ -78,7 +78,7 @@ def gps_visualize():
     if save_gps:
         np.savetxt(root_path + sequence_name + "/" + "gps.csv", position_arr)
     f, a = plt.subplots(1, 1, figsize=(21, 9))
-    a.scatter(position_arr[:,0], position_arr[:,1], s=1)
+    a.scatter( position_arr[:,1],position_arr[:,0], s=1)
     plt.show()
 
 def odom_visualize():
@@ -122,7 +122,7 @@ def odom_visualize():
     
     odom_cart = np.array(odom_cart)
     plt.title("Radar Odometry Result")
-    plt.scatter(odom_cart[:,0], odom_cart[:,1], c="b", s=1)
+    plt.scatter(odom_cart[:,1],odom_cart[:,0], c="b", s=1)
     plt.show()
 
 
