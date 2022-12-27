@@ -212,35 +212,73 @@ def get_radar_label_from_t(output, seq, fill):
         return None
     
 
-    return img
 
-def load_radar_data(sequence_path, radar_timestamps, radar_idx, history_scan_num):
+def load_radar_data(sequence_path, ro_data, radar_idx, history_scan_num, cart_resolution, image_warp=False):
+    from copy import deepcopy
+    radar_idx += 1  # fix the start index of array is 0  but file start at 1
     str_format = '{:06d}'
-    radar_cart_list = list()
-    tf_mat_list = list()
+    radar_cart_no_warp_list = list()
+    radar_cart_warp_list = list()
+    center = (int(1152/2) -256, int(1152/2) + 256)
     
+    radar_warp_current = np.zeros((1152,1152))
+    radar_warp_prev = np.zeros((1152,1152))
+    radar_warp_combine = np.zeros((1152,1152,3))
     for i in range(history_scan_num):
-        
-        idx = radar_idx - i
+        idx = radar_idx - i     
         radar_filename = os.path.join(sequence_path, 'Navtech_Cartesian', str_format.format(idx) + '.png')
         radar_cart = cv2.imread(radar_filename, 0)
-        
-        #radar_cart = pixelVal_vec(radar_cart, r1, s1, r2, s2)
-        
-        #radar_cart = radar_cart / 255.0
-        print(radar_filename)
-        # =================Need to compensate the ego motion to calculate the velocity in global
+        if i == 0:
+            radar_warp_current = cv2.imread(radar_filename, 0)
         # Motion Compensation part
-        # for j in range(i):
-        #     j = i - 1 - j
-        #     ro_idx = radar_idx - 1 - j
-        #     #print('ro_idx',ro_idx)
-        #     ro_tf = GetMatFromXYYaw(ro_data.iloc[ro_idx, 2], ro_data.iloc[ro_idx, 3], ro_data.iloc[ro_idx, 7])
-        #     tf_mat = tf_mat.dot(ro_tf)
-        # trans_radar_cart = warp_radar_by_radar_motion(radar_cart, tf_mat, config['cart_resolution'])
-        radar_cart_list.append(radar_cart)
+        if image_warp:
+            
+            tf_mat = np.identity(3).astype(np.float32)
+            #cv2.imshow("original", radar_cart[center[0] : center[1], center[0] : center[1]])
+            for j in range(i):
+                j = i - 1 - j
+                ro_idx = radar_idx - 1 - j
+                ro_tf, yaw = GetRotMatFromTransMat(ro_data[ro_idx])
+                ro_tf = np.linalg.inv(ro_tf) # 
+                tf_mat = tf_mat.dot(ro_tf)
+                # print(f'ro_transform:{ro_tf}')
+            #trans_radar_cart = radar_cart
+            #if i > 0:    
+                #trans_radar_cart = rotate_image(radar_cart, yaw)
+            
+            trans_radar_cart = warp_radar_by_radar_motion(radar_cart, tf_mat, cart_resolution)
+            trans_radar_cart = trans_radar_cart[center[0] : center[1], center[0] : center[1]]
+            radar_cart_warp_list.append(trans_radar_cart)
+
+            # radar_warp_combine[:, :, 0] = trans_radar_cart / 255.
+            # radar_warp_combine[:, :, 2] = radar_warp_current / 255.
+
+            # trans_radar_cart_copy = deepcopy(trans_radar_cart)
+            # radar_warp_current_copy = deepcopy(radar_warp_current)
+
+            # #print(trans_radar_cart_copy[500:510, 500:510])
+            # #print(radar_warp_current_copy[500:510, 500:510])
+            # th = 50
+            # trans_radar_cart_copy[trans_radar_cart < th] = 0
+            # radar_warp_current_copy[radar_warp_current < th] = 0
+            # trans_radar_cart_copy[trans_radar_cart >= th] = 1
+            # radar_warp_current_copy[radar_warp_current >= th] = 1
+
+            #radar_warp_combine[:, :, 1] = np.logical_and(trans_radar_cart_copy , radar_warp_current_copy , dtype=np.float32)
+
+            #print(radar_cart)
+            #cv2.imshow("warped", radar_warp_combine)
+        else:
+            radar_cart_no_warp = radar_cart
+            radar_cart_no_warp = radar_cart_no_warp[center[0] : center[1], center[0] : center[1]]
+            radar_cart_no_warp_list.append(radar_cart_no_warp)
     
-    return radar_cart_list
+    if image_warp:
+        #cv2.imshow("warp combined", np.float32(radar_warp_combined) / 5.)
+        #cv2.waitKey()
+        return radar_cart_warp_list
+    else:
+        return radar_cart_no_warp_list
 
 def get_multiplesweep_bf_radar_idx(sequence_path: str,
                                    annotations: dict,
