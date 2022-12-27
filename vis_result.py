@@ -358,7 +358,7 @@ def vis_result(data_path, trained_model_path, img_save_dir,  which_model, disp, 
             viz_motion_pred = viz_motion_pred  #* viz_cat_pred
 
 
-
+            cv2.imshow("mask", viz_motion_pred)
             #cv2.imshow("test", raw_radar/255.0)
             #print(raw_radar)
             
