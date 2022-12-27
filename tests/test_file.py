@@ -9,9 +9,10 @@ import utils.data_utils as data_utils
 class TestFile(unittest.TestCase):
     
     def test_file(self):
-        data_root = "/data/training/city_1_1/"
-        datas = np.load(os.getcwd() + data_root + '6.npy', allow_pickle=True)
+        data_root = "/media/ee904/Data_stored/radiate/data/training/city_1_1/"
+        datas = np.load( data_root + '6.npy', allow_pickle=True)
         datas = datas.item()
+        print(datas.keys())
         for i in datas:
             print(datas[i].shape)
             cv2.imshow("test", datas[i])
