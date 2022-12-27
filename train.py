@@ -11,7 +11,7 @@ import sys
 import os
 import math
 from shutil import copytree, copy
-from model.oxford_model import RaMNet
+from model.model import RaMNet
 from DataLoader import RadiateDataset
 from torch.utils.tensorboard import SummaryWriter
 import torchvision
