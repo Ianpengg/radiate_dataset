@@ -1,4 +1,4 @@
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import os
 from multiprocessing import Manager
@@ -114,3 +114,12 @@ class RadiateDataset(Dataset):
         pixel_radar_map_list = np.stack(pixel_radar_map_list, 0)
 
         return raw_radars_list, pixel_moving_map_list, pixel_radar_map_list
+
+if __name__ == "__main__":
+  trainset = RadiateDataset(dataset_root='/media/ee904/Data_stored/radiate/data/training/city_1_1',spatial_val_num=-1)
+  loader = DataLoader(trainset, batch_size=4, shuffle=False, )
+  
+  for i, data in enumerate(loader):
+    print(data[0].shape)
+    #print([i.shape for i in data])
+    exit()
