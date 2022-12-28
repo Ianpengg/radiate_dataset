@@ -8,8 +8,8 @@ import cv2
 
 class RadiateDataset(Dataset):
     def __init__(self, dataset_root=None, spatial_val_num=None, future_frame_skip=0, voxel_size=(0.25, 0.25, 0.4),
-                 area_extents=np.array([[-32., 32.], [-32., 32.], [-3., 2.]]),  num_past_frames=5,
-                 num_future_frames=20, num_category=5, cache_size=10000):
+                 area_extents=np.array([[-32., 32.], [-32., 32.], [-3., 2.]]),  num_past_frames=2,
+                 num_future_frames=1, num_category=2, cache_size=10000):
         
 
         
