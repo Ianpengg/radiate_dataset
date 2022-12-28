@@ -486,29 +486,7 @@ def compute_and_bp_loss(optimizer, device, future_frames_num,
 
     # ---------------------------------------------------------------------
     pixel_radar_map_gt = pixel_radar_map_gt.view(-1, 512, 512, cell_category_num)
-    pixel_radar_map_gt = pixel_radar_map_gt.permute(0, 3, 1, 2).to(device)
-    # #print('pixel_radar_map_gt.shape:', pixel_radar_map_gt.shape) # torch.Size([bs, 2, 256, 256]) # non_empty_map
-    # pixel_lidar_map_gt = pixel_lidar_map_gt.to(device) # torch.Size([bs, 1, 256, 256])
-    #print('pixel_lidar_map_gt.shape:', pixel_lidar_map_gt.shape)
-
-    ### power thres
-    # power_thres_map = torch.clone(raw_radars[:,0,:,:,0])
-    # power_thres_map[power_thres_map>0.08] = 1
-    # power_thres_map[power_thres_map<=0.08] = 0
-
-    # pixel_radar_map_gt_thres = torch.clone(pixel_radar_map_gt)
-    # pixel_radar_map_gt_thres[:,0,:,:] = pixel_radar_map_gt_thres[:,0,:,:]*power_thres_map
-    # pixel_radar_map_gt_thres[:,1,:,:] = torch.logical_not(pixel_radar_map_gt_thres[:,0,:,:])
-
-    # pixel_lidar_map_gt_thres = torch.clone(pixel_lidar_map_gt)
-    # pixel_lidar_map_gt_thres[:,0,:,:] = pixel_lidar_map_gt_thres[:,0,:,:]*power_thres_map
-
-    # fig, ax = plt.subplots(1, 3, figsize=(15, 5))
-    # ax[0].imshow(power_thres_map[0].detach().cpu().numpy())
-    # ax[1].imshow(pixel_radar_map_gt[0,0].detach().cpu().numpy())
-    # #ax[2].imshow(pixel_radar_map_gt_thres[0,0].detach().cpu().numpy())
-    # ax[2].imshow(pixel_lidar_map_gt_thres[0,0].detach().cpu().numpy())
-    # plt.show()
+    pixel_radar_map_gt = pixel_radar_map_gt.permute(0, 3, 1, 2).to(device)    
 
     # ---------------------------------------------------------------------
     # -- Compute the grid cell classification loss
