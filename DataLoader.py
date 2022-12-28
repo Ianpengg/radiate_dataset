@@ -108,9 +108,8 @@ class RadiateDataset(Dataset):
             raw_radars_list.append(raw_radars)
             pixel_moving_map_list.append(pixel_moving_map)
             pixel_radar_map_list.append(pixel_radar_map)
-        #print(pixel_radar_map.shape)
-        #print(pixel_radar_map)
-        raw_radars_list = np.stack(raw_radars_list, 0)
+        #raw_radars_list = np.stack(raw_radars_list, 0)
+        raw_radars_list = np.squeeze(np.array(raw_radars_list), 0)
         pixel_moving_map_list = np.stack(pixel_moving_map_list, 0)
         pixel_radar_map_list = np.stack(pixel_radar_map_list, 0)
 
