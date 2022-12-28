@@ -22,28 +22,9 @@ import cv2
 import open3d as o3d
 import ipdb
 import matplotlib.pyplot as plt
-from utils.loss import MotionLoss, ClassLoss, DispLoss, WarmupCosineLR
-
-config = {
-'batch_size': 8,
-'num_epochs': 10,
-'num_workers': 4,
-'use_temporal_info': True,
-'num_past_frames': 2,
-'future_frames_num': 1,
-'out_seq_len': 1,
-'height_feat_size': 1,
-'cell_category_num': 2,
-'motion_weight': [1.0, 0.500],
-}
-
-BATCH_SIZE = config['batch_size']
-EPOCHS = config['num_epochs']
-WORKERS = config['num_workers']
-
-
-
+from utils.loss import MotionLoss, ClassLoss, DispLoss
 #import copy
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
